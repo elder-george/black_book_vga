@@ -2,45 +2,11 @@
 
 global start
 
-AC_index_data   equ 3C0H
-AC_index        equ 3C0H
-AC_data         equ AC_index+1
+%include 'common.inc'
 
 HPELPAN         equ     20h | 13h   ;AC horizontal pel panning register
                                      ; (bit 7 is high to keep palette RAM
                                      ; addressing on)
-
-Misc_out_Write  EQU 3C2H 
-Misc_out_Read   EQU 3CCH
-
-Inp_Status0     EQU 3C2H  ; read
-
-Inp_Status1_Clr EQU 3DAH  ; read
-Inp_Status1_Mc  EQU 3BAH  ; read
-VSYNC_MASK      equ     08h     ;vertical sync bit in status register 1
-DE_MASK         equ     01h     ;display enable bit in status register 1
-
-SC_index        equ 3C4H
-SC_data         equ SC_index+1
-SC_MAP_MASK     EQU 2
-
-GC_index        equ 3CEH
-GC_data         equ GC_index+1
-GC_MODE         EQU 5
-
-CRTC_index_Mc   equ 3B4h
-CRTC_data_Mc    equ CRTC_index_Mc+1
-
-CRTC_index_Clr  equ 3D4h
-CRTC_data_Clr   equ CRTC_index_Clr+1
-CRTC_START_ADDRESS_HIGH equ  0ch     ;CRTC start address high byte
-CRTC_START_ADDRESS_LOW equ   0dh     ;CRTC start address low byte
-CRTC_OFFSET     equ     13h     ;CRTC offset register
-
-CRTC_index EQU CRTC_index_Clr
-Inp_Status1 EQU Inp_Status1_Clr
-
-
 
 Video_Seg       equ 0a000h
 
@@ -66,17 +32,6 @@ NUM_BALLS       equ     4       ;number of balls to animate
 
 
 
-%macro out_vga 3
-%define __ctrl %1
-%define __mask %2
-%define __val %3
-    mov dx, __ctrl%+_index
-    mov ah, __mask
-    mov al, __val
-    out dx, ax
-%endm
-
-
 section .code
 start:
     cld
@@ -89,7 +44,7 @@ start:
     mov     ax,0eh
 %endif
     int     10h
-    mov     ax,Video_Seg
+    mov     ax,VGA_VIDEO_SEGMENT
     mov     es,ax
 .draw_borders:
     mov     di,PAGE0_OFFSET
@@ -97,46 +52,41 @@ start:
     mov     di,PAGE1_OFFSET
     call    DrawBorder      ;page 1 border
 ; Draw all four plane's worth of the ball to undisplayed VGA memory.
-    out_vga SC,01, SC_MAP_MASK  ;enable plane 0
+    SET_PORT SC,SC_MAP_MASK,1   ;enable plane 0
     mov     si, BallPlane0Image
     mov     di,BALL_OFFSET
     mov     cx,BALL_WIDTH * BALL_HEIGHT
     rep movsb
-    out_vga SC,02, SC_MAP_MASK  ;enable plane 1
+    SET_PORT SC,SC_MAP_MASK, 2  ;enable plane 1
     mov     si, BallPlane1Image
     mov     di,BALL_OFFSET
     mov     cx,BALL_WIDTH * BALL_HEIGHT
     rep movsb
-    out_vga SC,04, SC_MAP_MASK  ;enable plane 2
+    SET_PORT SC, SC_MAP_MASK, 04  ;enable plane 2
     mov     si, BallPlane2Image
     mov     di,BALL_OFFSET
     mov     cx,BALL_WIDTH * BALL_HEIGHT
     rep movsb
-    out_vga SC,08, SC_MAP_MASK  ;enable plane 3
+    SET_PORT SC, SC_MAP_MASK, 08  ;enable plane 3
     mov     si, BallPlane3Image
     mov     di,BALL_OFFSET
     mov     cx,BALL_WIDTH * BALL_HEIGHT
     rep movsb
 ; Draw a blank image the size of the ball to undisplayed VGA memory.
-    out_vga SC,0ffh, SC_MAP_MASK  ;enable all planes
+    SET_PORT SC, SC_MAP_MASK, 0ffh  ;enable all planes
     mov     di,BLANK_OFFSET
     mov     cx,BALL_WIDTH * BALL_HEIGHT
     xor     al,al
     rep stosb
 ; Set VGA to write mode 1, for block copying ball and blank images.
-    mov     dx,GC_index
-    mov     al,GC_MODE
-    out     dx,al           ;point GC Index to GC Mode register
-    inc     dx              ;point to GC Data register
-    jmp     $+2             ;delay to let bus settle
-    in      al,dx           ;get current state of GC Mode
+    GET_PORT GC, GC_MODE
     and     al, ~3          ;clear the write mode bits
     or      al,1            ;set the write mode field to 1
     jmp     $+2             ;delay to let bus settle
     out     dx,al
 
 ; Set VGA offset register in words to define logical screen width.
-    out_vga CRTC, LOGICAL_SCREEN_WIDTH / 2, CRTC_OFFSET
+    SET_PORT CRTC, CRTC_HOFFSET, LOGICAL_SCREEN_WIDTH / 2
 ;
 ; Move the balls by erasing each ball, moving it, and
 ; redrawing it, then switching pages when they're all moved.
@@ -188,29 +138,29 @@ start:
     dec     bx
     jns     .EachBallLoop
 .DoneWithBalls:
-; Set up the next panning state (but don't program it into the ; VGA yet).
+; Set up the next panning state (but don't program it into the VGA yet).
     call AdjustPanning
 ; Wait for display enable (pixel data being displayed) so we know
 ; we're nowhere near vertical sync, where the start address gets
 ; latched and used.
     call    WaitDisplayEnable
 ; Flip to the new page by changing the start address.
-    mov     ax,[CurrentPageOffset]
-    add     ax,[PanningStartOffset]
-    push    ax
-    out_vga CRTC, al, CRTC_START_ADDRESS_LOW
+; !!!NOTE: Abrash's code used AX here; changed to BX for simpler macros
+    mov     bx,[CurrentPageOffset]
+    add     bx,[PanningStartOffset]
+    push    bx
+    SET_PORT CRTC, CRTC_START_ADDRESS_LOW, bl
     ;mov     al,byte [CurrentPageOffset+1]
-    pop     ax
-    mov     al,ah
-    out_vga CRTC, al, CRTC_START_ADDRESS_HIGH
+    pop     bx
+    mov     bl,bh
+    SET_PORT CRTC, CRTC_START_ADDRESS_HIGH, bl
 ; Wait for vertical sync so the new start address has a chance to take effect.
-    call    WaitVSync
+    call    WaitForVerticalSyncStart
 ; Set horizontal panning now, just as new start address takes effect.
 ;
-    mov     al,[HPan]
-    mov     dx,Inp_Status1
+    mov     dx,INPUT_STATUS_0
     in      al,dx                   ;reset AC addressing to index reg
-    mov     dx,AC_index
+    mov     dx,AC_INDEX
     mov     al,HPELPAN
     out     dx,al                   ;set AC index to pel pan reg
     mov     al,[HPan]
@@ -244,10 +194,10 @@ DrawBorder:
         push    di
         mov     cx,LOGICAL_SCREEN_HEIGHT / 16
 .DrawLeftBorderLoop:
-        mov     al,0ch          ;select red color for block
+        mov     ah,0ch          ;select red color for block
         call    DrawBorderBlock
         add     di,LOGICAL_SCREEN_WIDTH * 8
-        mov     al,0eh          ;select yellow color for block
+        mov     ah,0eh          ;select yellow color for block
         call    DrawBorderBlock
         add     di,LOGICAL_SCREEN_WIDTH * 8
         loop    .DrawLeftBorderLoop
@@ -259,10 +209,10 @@ DrawBorder:
         add     di,LOGICAL_SCREEN_WIDTH - 1
         mov     cx,LOGICAL_SCREEN_HEIGHT / 16
 .DrawRightBorderLoop:
-        mov     al,0eh          ;select yellow color for block
+        mov     ah,0eh          ;select yellow color for block
         call    DrawBorderBlock
         add     di,LOGICAL_SCREEN_WIDTH * 8
-        mov     al,0ch          ;select red color for block
+        mov     ah,0ch          ;select red color for block
         call    DrawBorderBlock
         add     di,LOGICAL_SCREEN_WIDTH * 8
         loop    .DrawRightBorderLoop
@@ -274,10 +224,10 @@ DrawBorder:
         mov     cx,(LOGICAL_SCREEN_WIDTH - 2) / 2
 .DrawTopBorderLoop:
         inc     di
-        mov     al,0eh          ;select yellow color for block
+        mov     ah,0eh          ;select yellow color for block
         call    DrawBorderBlock
         inc     di
-        mov     al,0ch          ;select red color for block
+        mov     ah,0ch          ;select red color for block
         call    DrawBorderBlock
         loop    .DrawTopBorderLoop
         pop     di
@@ -288,17 +238,19 @@ DrawBorder:
         mov     cx,(LOGICAL_SCREEN_WIDTH - 2) / 2
 .DrawBottomBorderLoop:
         inc     di
-        mov     al,0ch          ;select red color for block
+        mov     ah,0ch          ;select red color for block
         call    DrawBorderBlock
         inc     di
-        mov     al,0eh          ;select yellow color for block
+        mov     ah,0eh          ;select yellow color for block
         call    DrawBorderBlock
         loop    .DrawBottomBorderLoop
         ret
 
+; Draws an 8x8 border block in color in AH at location DI.
+; DI preserved.
 DrawBorderBlock:
     push    di
-    out_vga  SC, al, SC_MAP_MASK
+    SET_PORT  SC, SC_MAP_MASK, ah
     mov     al,0ffh
     %rep 8
     stosb
@@ -383,26 +335,6 @@ AdjustPanning:
                                     ;pan up by retarding the start
                                     ; address by a scan line
 .EndPan:
-    ret
-
-WaitDisplayEnable:
-        mov     dx,Inp_Status1
-.WaitDELoop:
-        in      al,dx
-        and     al,DE_MASK
-        jnz     .WaitDELoop
-        ret
-
-WaitVSync:
-    mov     dx,Inp_Status1
-.WaitNotVSyncLoop:
-    in      al,dx
-    and     al,VSYNC_MASK
-    jnz     .WaitNotVSyncLoop
-.WaitVSyncLoop:
-    in      al,dx
-    and     al,VSYNC_MASK
-    jz      .WaitVSyncLoop
     ret
 
 section .data data
