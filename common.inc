@@ -19,6 +19,8 @@ GC_MISC         equ     6
 GC_BIT_MASK     equ     8       ;GC bit mask register index
 
 INPUT_STATUS_0          equ     3dah
+DE_MASK                 equ     01h
+VSYNC_MASK              equ     08h
 
 CRTC_INDEX              equ     3d4h
 CRTC_MAP_MASK           equ     2
@@ -61,6 +63,7 @@ AC_PRESERVE_COLOR       equ    20h          ; OR with a value to not turn off vi
 %define INDEX %2
 %define SETTING %3
     WITH_PORT PREFIX, INDEX
+    jmp $+2
     in al, dx
 %endm
 
@@ -103,6 +106,39 @@ PLANE_ALL   EQU 0fh
 MODE_V640x350x16    equ 10h
 MODE_V320x200x256   equ 13h
 MODE_T80x50         equ 03h
+
+; Waits for the leading edge of the vertical sync pulse.
+WaitForVerticalSyncStart:
+     mov     dx,INPUT_STATUS_0
+.WaitNoSync:
+     in      al,dx
+     test    al,08h
+     jnz     .WaitNoSync
+.WaitSync:
+     in      al,dx
+     test    al,08h
+     jz      .WaitSync
+     ret
+; Waits for the trailing edge of the vertical sync pulse.
+WaitForVerticalSyncEnd:
+    mov dx, INPUT_STATUS_0
+.WaitSync:
+    in al, dx
+    test al, 08h
+    jz .WaitSync
+.WaitSyncEnd:
+    in al, dx
+    test al, 08h
+    jnz  .WaitSyncEnd
+    ret
+
+WaitDisplayEnable:
+        mov     dx,INPUT_STATUS_0
+.WaitDELoop:
+        in      al,dx
+        and     al,DE_MASK
+        jnz     .WaitDELoop
+        ret
 
 
 %macro MEMCPY 5

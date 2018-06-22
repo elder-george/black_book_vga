@@ -122,32 +122,6 @@ start:
 
 
 
-; Waits for the leading edge of the vertical sync pulse.
-WaitForVerticalSyncStart:
-     mov     dx,INPUT_STATUS_0
-.WaitNoSync:
-     in      al,dx
-     test    al,08h
-     jnz     .WaitNoSync
-.WaitSync:
-     in      al,dx
-     test    al,08h
-     jz      .WaitSync
-     ret
-; Waits for the trailing edge of the vertical sync pulse.
-WaitForVerticalSyncEnd:
-    mov dx, INPUT_STATUS_0
-.WaitSync:
-    in al, dx
-    test al, 08h
-    jz .WaitSync
-.WaitSyncEnd:
-    in al, dx
-    test al, 08h
-    jnz  .WaitSyncEnd
-    ret
-
-
 ; Sets the start address to the value specifed by StartAddress.
 SetStartAddress:
     call WaitForVerticalSyncEnd

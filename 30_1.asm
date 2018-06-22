@@ -100,22 +100,8 @@ start:
     WAIT_FOR_KEYPRESS   ; clear character
 
 .exit:
-    ;WAIT_FOR_KEYPRESS
     SET_VIDEO_MODE MODE_T80x50
     EXIT 0
-
-; Waits for the leading edge of the vertical sync pulse.
-WaitForVerticalSyncEnd:
-    mov dx, INPUT_STATUS_0
-.WaitSync:
-    in al, dx
-    test al, 08h
-    jz .WaitSync
-.WaitSyncEnd:
-    in al, dx
-    test al, 08h
-    jnz  .WaitSyncEnd
-    ret
 
 ; Sets the start address to the value specifed by StartAddress.
 SetStartAddress:
