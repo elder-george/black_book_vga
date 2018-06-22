@@ -176,19 +176,14 @@ start:
 ;
 ; Exit if a key's been hit.
 ;
-    mov     ah,1
-    int     16h
+    CHECK_KEYPRESS
     jnz     .Done
     jmp     .BallAnimationLoop
 .Done:
-    mov ah, 0
-    int 16h
-    mov ax,3
-    int 10h
+    CLEAR_KEYPRESS
+    SET_VIDEO_MODE MODE_T80x50
 .exit:
-    mov ax, 4c00h
-    int 21h
-    ret
+    EXIT 0
 
 DrawBorder:
         push    di

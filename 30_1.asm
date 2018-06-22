@@ -7,9 +7,6 @@ WORD_OUTS_OK    equ 1   ;set to 0 to assemble for
                         ; computers that can't handle
                         ; word outs to indexed VGA registers
 
-
-
-
 SCREEN_WIDTH    equ 640
 SCREEN_HEIGHT   equ 350
 
@@ -117,9 +114,7 @@ SetStartAddress:
     ret
 
 SetSplitScreenScanLine:
-    push ax
-    push cx
-    push dx
+    multipush ax, cx, dx
 ; Wait for the trailing edge of vertical sync before setting so that
 ; one half of the address isn't loaded before the start of the frame
 ; and the other half after, resulting in flicker as one frame is
@@ -160,9 +155,7 @@ SetSplitScreenScanLine:
 %endif
     sti
 
-    pop dx
-    pop cx
-    pop ax
+    multipop ax, cx, dx
     ret
 
 SplitScreenUp:

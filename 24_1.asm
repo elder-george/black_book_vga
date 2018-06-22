@@ -5,7 +5,8 @@
 ;  the images with the background.
 global start
 
-VGA_VIDEO_SEGMENT       equ     0a000h  ;VGA display memory segment
+%include 'common.inc'
+
 SCREEN_HEIGHT           equ     350
 SCREEN_WIDTH_IN_BYTES   equ     80
 DEMO_AREA_HEIGHT        equ     336     ;# of scan lines in area
@@ -16,13 +17,6 @@ DEMO_AREA_WIDTH_IN_BYTES equ    40      ;width in bytes of area
                                         ; is demonstrated in
 VERTICAL_BOX_WIDTH_IN_BYTES equ 10      ;width in bytes of the box used to
                                         ; demonstrate each logical function
-;
-; VGA register equates.
-;
-GC_INDEX        equ     3ceh    ;GC index register
-GC_ROTATE       equ     3       ;GC data rotate/logical function
-                                ; register index
-GC_MODE         equ     5       ;GC mode register index
 
 section .data data
 ; String used to label logical functions.
@@ -37,15 +31,6 @@ FillPatternVert db      'Fill Pattern: Vertical Bar'
 FILL_PATTERN_VERT_LENGTH        equ     $ - FillPatternVert
 FillPatternHorz db      'Fill Pattern: Horizontal Bar'
 FILL_PATTERN_HORZ_LENGTH equ    $ - FillPatternHorz
-
-; Macro to set indexed register INDEX of GC chip to SETTING.
-%macro SET_GC 2
-%define INDEX %1
-%define SETTING %2
-    mov dx, GC_INDEX
-    mov ax, ((SETTING << 8) | INDEX)
-    out dx, ax
-%endm
 
 %define OP_NOP 0
 %define OP_AND 08h
@@ -76,8 +61,7 @@ start:
     mov ax, data
     mov ds, ax
 
-    mov ax, 010h
-    int 10h
+    SET_VIDEO_MODE MODE_V640x350x16
 
     mov ax, VGA_VIDEO_SEGMENT
     mov es, ax
@@ -128,21 +112,15 @@ start:
     TEXT_UP FillPatternVert, FILL_PATTERN_VERT_LENGTH, 15, 42
     TEXT_UP FillPatternHorz, FILL_PATTERN_HORZ_LENGTH, 21, 42
 
-.WaitForKey:
-    mov     ah,1
-    int     16h
-    jz      .WaitForKey
+    WAIT_FOR_KEYPRESS
 
 .exit:
-    mov     ah,0    ;clear key that we just detected
-    int     16h
+    ;mov     ah,0    ;clear key that we just detected
+    ;int     16h
 ;
-    mov     ax,3    ;reset to text mode
-    int     10h
+    SET_VIDEO_MODE MODE_T80x50
 ;
-    mov     ah,4ch  ;exit to DOS
-    int     21h
-
+    EXIT 0
 
 
 %macro DRAW_BOX_QUARTER 2

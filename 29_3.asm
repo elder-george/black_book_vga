@@ -60,11 +60,9 @@ start:
     mov cx, 16
     xor al, al
 .BarLoop:
-    push ax
-    push cx
+    multipush ax, cx
     call BarUp
-    pop cx
-    pop ax
+    multipop ax, cx
     inc ax          ; next attribute
     loop .BarLoop
 

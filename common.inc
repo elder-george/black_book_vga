@@ -104,6 +104,7 @@ PLANE_ALL   EQU 0fh
 %endm
 
 MODE_V640x350x16    equ 10h
+MODE_V640x480x16    equ 12h
 MODE_V320x200x256   equ 13h
 MODE_T80x50         equ 03h
 
@@ -187,14 +188,20 @@ WaitDisplayEnable:
 %endmacro
 
 %macro CHECK_KEYPRESS 0
-    mov ah, 0bh
-    int 21h
+    mov ah, 01h
+    int 16h
 %endm
 
 %macro WAIT_FOR_KEYPRESS 0
     mov ah, 01h
     int 21h
 %endmacro
+
+%macro CLEAR_KEYPRESS 0
+    mov ah, 00h
+    int 16h
+%endmacro
+
 
 
 %macro SHOW_MESSAGE 2
@@ -216,4 +223,19 @@ WaitDisplayEnable:
     WAIT_FOR_KEYPRESS
     SET_VIDEO_MODE MODE_T80x50
     EXIT 0
+%endmacro
+
+; copied from NASM docs
+%macro  multipush 1-*
+  %rep  %0
+        push    %1
+  %rotate 1
+  %endrep
+%endmacro
+
+%macro  multipop 1-*
+  %rep %0
+  %rotate -1
+        pop     %1
+  %endrep
 %endmacro

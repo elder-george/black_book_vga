@@ -33,8 +33,7 @@ section .code code
 start:
     mov ax, data
     mov ds, ax
-    mov ax, 10h
-    int 10h
+    SET_VIDEO_MODE MODE_V640x350x16
 
     mov word [CurrentX], 0
     mov word [CurrentY], 200

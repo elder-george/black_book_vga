@@ -8,7 +8,7 @@ global start
 NUMBER_OF_BARS  EQU 24
 BYTES_PER_BAR   EQU 80*10
 
-BYTES_PER_SCREEN EQU 480*80
+BYTES_PER_SCREEN EQU 640*480 / 8
 
 
 section .stack stack
@@ -21,8 +21,7 @@ start:
     mov ax, data
     mov ds, ax
 
-    mov ax, 012h
-    int 10h
+    SET_VIDEO_MODE MODE_V640x480x16
 
     mov ax, EGA_VIDEO_SEGMENT
     mov es, ax
@@ -39,6 +38,8 @@ start:
     add di, BYTES_PER_BAR
     dec bp
     jnz .HorzBarLoop
+
+    WAIT_FOR_KEYPRESS
 
 ; Fill screen with blue, using set/reset to force plane 0 to 1's and all other plane to 0's.
     ENABLE_PLANE PLANE_ALL

@@ -24,8 +24,7 @@ start:
     mov ax, data
     mov ds, ax
 
-    mov ax, 012h
-    int 10h
+    SET_VIDEO_MODE MODE_V640x480x16
 
     GET_GC GC_SET_RESET
     and al, 0f0h
@@ -80,14 +79,7 @@ start:
 ;  Forces ALU function to "move".
 ;  Forces write mode 3.
 DrawChar:
-    push ax
-    push bx
-    push cx
-    push dx
-    push si
-    push di
-    push bp
-    push ds
+    multipush ax, bx, cx, dx, si, di, bp, ds
 
     push ax  ; preserve character to draw
 ; Set up set/reset to produce character color, using the readability
@@ -176,14 +168,7 @@ DrawChar:
     dec bp
     jnz .CharacterLoop
 .done:
-    pop ds
-    pop bp
-    pop di
-    pop si
-    pop dx
-    pop cx
-    pop bx
-    pop ax
+    multipop ax, bx, cx, dx, si, di, bp, ds
     ret
 
 ; Set the pointer to the font to draw from to ES:BP.

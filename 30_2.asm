@@ -145,9 +145,7 @@ SetPelPan:
     ret
 
 SetSplitScreenScanLine:
-    push ax
-    push cx
-    push dx
+    multipush ax, cx, dx
 ; Wait for the trailing edge of vertical sync before setting so that
 ; one half of the address isn't loaded before the start of the frame
 ; and the other half after, resulting in flicker as one frame is
@@ -188,9 +186,7 @@ SetSplitScreenScanLine:
 %endif
     sti
 
-    pop dx
-    pop cx
-    pop ax
+    multipop ax, cx, dx
     ret
 
 ; Pan horizontally to the right the number of pixels specified by CX.

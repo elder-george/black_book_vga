@@ -23,8 +23,7 @@ start:
     mov ax, data
     mov ds, ax
 
-    mov ax, 012h
-    int 10h
+    SET_VIDEO_MODE MODE_V640x480x16
 
     GET_GC GC_SET_RESET
     and al, 0f0h
@@ -60,14 +59,7 @@ start:
     PAUSE_BEFORE_EXIT
 
 DrawString:
-    push ax
-    push bx
-    push cx
-    push dx
-    push si
-    push di
-    push bp
-    push ds
+    multipush ax, bx, cx, dx, si, di, bp, ds
 ; Set up set/reset to produce character color, using the readability
 ; of VGA register to preserve the setting of reserved bits 7-4.
     GET_GC GC_SET_RESET
@@ -147,21 +139,11 @@ DrawString:
 .RightHalfLoopDone:
 
 .Done:
-    pop     ds
-    pop     bp
-    pop     di
-    pop     si
-    pop     dx
-    pop     cx
-    pop     bx
-    pop     ax
+    multipop ax, bx, cx, dx, si, di, bp, ds
     ret
 
 CharacterUp:
-    push cx
-    push si
-    push di
-    push ds
+    multipush cx, si, di, ds
     
     lds si, [FontPointer]
 ; Calculate font address of character.
@@ -182,10 +164,7 @@ CharacterUp:
     jnz .CharacterLoop
 
 .Done:
-    pop ds
-    pop di
-    pop si
-    pop cx
+    multipop cx, si, di, ds
     ret
 
 ; Set the pointer to the font to draw from to ES:BP.

@@ -24,8 +24,7 @@ start:
     mov ax, data
     mov ds, ax
 
-    mov     ax,012h ; 640x480
-    int     10h
+    SET_VIDEO_MODE MODE_V640x480x16
 ; Set driver to use the 8x8 font.
     mov ax, 01130h
     mov bh, 3

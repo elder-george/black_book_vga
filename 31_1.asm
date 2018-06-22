@@ -145,6 +145,7 @@ STRUC LineControl
 .LineColor: resb 1
 .SIZE:
 ENDSTRUC
+; NASM's support for structures is surprisingly verbose, so making an ad hoc macro "ctor"
 %macro aLineControl 6
 istruc LineControl
     at LineControl.StartX,      dw %1
@@ -164,7 +165,7 @@ LineList:
     aLineControl 130, 290,-1, -1, 60, 5
     aLineControl  70, 230, 0, -1, 60, 6
     aLineControl  70, 170, 1, -1, 60, 7
-    aLineControl  -1,   0, 0,  0,  0,  0
+    aLineControl  -1,   0, 0,  0,  0, 0
 
 section stack stack
     resb 256

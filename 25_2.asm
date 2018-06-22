@@ -13,8 +13,7 @@ start:
     mov ds, ax
     mov ax, EGA_VIDEO_SEGMENT
     mov es, ax
-    mov ax, 012h    ; 640x480
-    int 10h
+    SET_VIDEO_MODE MODE_V640x480x16
 
 ; Draw 24 10-scan-line high horizontal bars in green, 10 scan lines apart.
     SET_SC SC_MAP_MASK, 02h ; green plane only
