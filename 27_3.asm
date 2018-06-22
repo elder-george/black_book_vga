@@ -13,7 +13,7 @@ start:
     mov es, ax
     mov ah, 3   ; initial pattern
     mov cx, 4   ; number of planes
-    WITH_SC SC_MAP_MASK
+    WITH_PORT SC, SC_MAP_MASK
 .FillBitMap:
     mov al, 10h
     shr al, cl      ; generate map mask for this plane

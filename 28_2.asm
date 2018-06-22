@@ -41,7 +41,7 @@ start:
     mov al, COLOR_GREEN
     call SelectSetResetColor
     SET_GC GC_COLOR_COMPARE, COLOR_YELLOW
-    WITH_GC GC_BIT_MASK
+    WITH_PORT GC,  GC_BIT_MASK
     mov al, 80h             ; initial mask
     mov di, 100*SCREEN_WIDTH/8
 .HLineLoop:
@@ -68,7 +68,7 @@ start:
 ; to AL.
 SelectSetResetColor:
     push ax
-    WITH_GC GC_SET_RESET
+    WITH_PORT GC, GC_SET_RESET
     pop ax
     out dx, al
     SET_GC GC_ENABLE_SET_RESET, PLANE_ALL
