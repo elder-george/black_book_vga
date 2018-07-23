@@ -16,8 +16,7 @@ This is why they only start from [Chapter 23](http://www.jagregory.com/abrash-bl
 Instructions
 ============
 
-Demos can be built with a `make`. Makefile is written to use [`nasm`](Demos can be built with a `make`. Makefile is written to use [`nasm` for compilation 
-) for compilation and [`alink`](http://alink.sourceforge.net/) for linking. 
+Demos can be built with a `make`. Makefile is written to use [`nasm`](Demos can be built with a `make`. Makefile is written to use [`nasm`](https://www.nasm.us/) for compilation and [`alink`](http://alink.sourceforge.net/) for linking. 
 The easiest way to run them is to use [DOSBox](https://www.dosbox.com/).
 
 Have fun!
