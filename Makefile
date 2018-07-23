@@ -17,8 +17,8 @@ SAMPLES=23_1 \
         31_1 31_2
 
 
-%.obj : %.asm
-    $(AS) $(ASFLAGS) $^
+%.obj : %.asm common.inc dos_api.inc
+    $(AS) $(ASFLAGS) $<
 
 %.exe : %.obj
     $(LD) $(LDFLAGS) $^
@@ -28,5 +28,6 @@ all: $(SAMPLES:=.exe)
 clean:
     $(RM) $(SAMPLES:=.obj)
     $(RM) $(SAMPLES:=.exe)
+    $(RM) std*.txt
 
 .PHONY: clean all
